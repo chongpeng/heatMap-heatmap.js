@@ -1,0 +1,110 @@
+three:  the method of jdbcadtd.ltJson3.
+generating json
+
+
+	  public String ltJson3(Subproject a,HttpServletRequest request) throws IOException{
+			   JdbcAdtd db = new JdbcAdtd();
+	    	 int year=a.getYear(a.getDate())-1;
+	    	 int s=0;
+	       	Double range=10.0;  //10公里
+	  //  	Double radius=20.0;
+	    	
+	    	Float centerX=a.getLongitude();
+	    	Float centerY=a.getLatitude();
+	    	Double minX=centerX-range*1.1f/96.0f;
+	    	Double maxX=centerX+range*1.1f/96.0f;
+	    	Double minY=centerY-range*1.1f/111.0f;
+	    	Double maxY=centerY+range*1.1f/111.0f;
+	    	Float  minIntensity=1000.0f;
+	    	Float  maxIntensity=0.0f;
+	    	
+	    	StringWriter lightningIntensity_sw=new StringWriter();
+	    	PrintWriter  lightningIntensity_bw=new  PrintWriter(lightningIntensity_sw);
+	    	StringBuffer lightningIntensity_buffer=lightningIntensity_sw.getBuffer();
+	    	
+	    	lightningIntensity_bw.printf("[");
+	    	lightningIntensity_buffer.append("\r\n");
+	    	
+	    	String str;
+	    	String P;
+	    	//由于闪电点的分布是随机的，为了求5年数据的平均，这里将区域划分为  index*index 个小块
+	    	int index=100;          //这里注意，插件最大容纳量为4万个左右
+	    	Float arr[][]=new Float[index][index];
+	    	int   times[][]=new int[index][index];
+        int i=0,j=0;
+        Double difX=(maxX-minX)/index;
+        Double difY=(maxY-minY)/index;
+        for(int m=0;m<index;m++){
+        	for(int n=0;n<index;n++){
+        			arr[m][n]=(float) 5.0;    //默认值
+        			times[m][n]=0;
+        		    }
+        	}
+      
+	    	db.readIP(request);
+	    	if(db.SetConnection(db.getURL(),db.getUSERNAME(),db.getPASSWORD())){
+		        ResultSet rs=db.sendLightningIntensityQueryNew(year, centerX,centerY, range);  //读取数据库
+	    		try {
+		            if (rs != null) {
+		                while (rs.next()) {
+		                	Float intensity=rs.getFloat("intensity");
+		                	Float x=rs.getFloat("longitude");
+		                	Float y=rs.getFloat("latitude");
+		                if(intensity<0){ 
+		                	 intensity=-intensity;      //雷电流强度不取负
+		                		}  
+		                	/**
+		                	 * 分成index*index个小块，数据融合之后，看不出区别
+		                	 */
+		                   i = (int)Math.round(((x-minX)/difX));  //判断闪电点，在哪一个小块中
+		                   j = (int)Math.round(((y-minY)/difY));
+		                   if(i<index&&j<index){
+		                	    arr[i][j]=arr[i][j]+intensity;
+		                	    times[i][j]=times[i][j]+1;
+		                     }
+		                   if(intensity<minIntensity){
+			                	     minIntensity=intensity;
+			                  }
+			               if(intensity>maxIntensity){
+			                	    maxIntensity=intensity;  
+			                 }
+		                }
+		            }
+	    		} catch (SQLException e) {
+		            e.printStackTrace();
+		        } 
+	    		 db.close();
+	    	}       	
+		                
+		    	  for(int m=0;m<index;m++){
+	        	   	for(int n=0;n<index;n++){
+	        	   		if(times[m][n]!=0)
+	        			   arr[m][n]=arr[m][n]/times[m][n];   //取平均
+	        		}
+	        	}
+		                  
+		        for(int k=0;k<index;k++){
+		        	for(int l=0;l<index;l++){
+		              if(TestRange(centerX,centerY,minX+k*difX,minY+l*difY)){   //在10公里范围内
+		            	  if(arr[k][l]<=5)
+		            		     arr[k][l]=(float) 15.0;
+		                lightningIntensity_buffer.append("{");	
+		                lightningIntensity_buffer.append("x:"+(k*difX)*3500+",");	 //由于闪电点分布范围太小，故，人为放大区域
+		                lightningIntensity_buffer.append("\r\n");
+		                lightningIntensity_buffer.append("y:"+(l*difY)*3500+",");	
+		                lightningIntensity_buffer.append("\r\n");
+		     //         lightningIntensity_buffer.append("radius:"+radius+",");		
+		     //         lightningIntensity_buffer.append("\r\n");
+		                lightningIntensity_buffer.append("value:"+arr[k][l]);		
+		                lightningIntensity_buffer.append("\r\n");
+		                lightningIntensity_buffer.append("},");	
+		                     }
+		                  }
+		              } 
+		                lightningIntensity_bw.printf("]");
+		           
+	    		      lightningIntensity_bw.close();
+	    		      lightningIntensity_sw.close();
+	    		      
+	     return  lightningIntensity_buffer.toString();
+	  } 
