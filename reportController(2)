@@ -1,0 +1,19 @@
+
+#  two :   controller   file
+
+  @RequestMapping(value = "/user/project/report/lightningIntensity", method = RequestMethod.GET)
+	public ModelAndView lightningIntensity(String id,HttpServletRequest request) throws Exception {
+		/**
+		 *显示项目前年10公里范围内的闪电分布
+		 * */
+		JdbcAdtd jdbcadtd=new JdbcAdtd();      
+	 //该方法返回查询的数据   ，并且  绘制只有坐标的图像（用于图像的重叠）
+	 // return json
+	String lightningIntensity= jdbcadtd.ltJson3(subprojectService.getSubproject(Long.valueOf(id)), request);
+		ModelAndView mv = new ModelAndView();
+		mv.addObject("lightningIntensity",lightningIntensity);
+		mv.addObject("subprojectId", id);
+		mv.setViewName("/user/project/report/lightningIntensity");
+		return mv;
+	}
+      
