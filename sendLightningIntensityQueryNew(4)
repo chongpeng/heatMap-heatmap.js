@@ -1,0 +1,52 @@
+
+#four:
+#  the query process 
+
+ public ResultSet sendLightningIntensityQueryNew(int year, Float longitude, Float latitude,Double range){
+	    	/*
+	    	 * 获取过去5年的数据
+	    	 * year年内的ADTD数据,范围在range（km）内
+	    	 * */
+	    	try {
+		    		String sql="select intensity,longitude,latitude from adtdreal_view a where " 
+		    				+"a.dyear<=?"+"and a.dyear>?-5"
+		    				+"and dbo.distance(?,?,a.longitude,a.latitude)<=?";
+    					m_ps = m_conn.prepareStatement(sql);
+    					m_ps.setInt(1, year);
+    					m_ps.setInt(2, year);
+    					m_ps.setFloat(3, longitude);
+    					m_ps.setFloat(4, latitude);
+    					m_ps.setDouble(5,range);
+    					m_rs=m_ps.executeQuery();
+					    return m_rs;
+			    } catch (SQLException e) {
+				    e.printStackTrace();
+			      }  
+	         	return null;
+	     }  
+	     
+	 # 函数  （数据库中定义）
+	 
+	 USE [ldzh]
+GO
+/****** Object:  UserDefinedFunction [dbo].[distance]    Script Date: 05/10/2016 13:35:50 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER FUNCTION [dbo].[distance](@lng1 FLOAT,@lat1 FLOAT,@lng2 FLOAT,@lat2 FLOAT)
+returns FLOAT
+as 
+begin 
+declare @R FLOAT , @a FLOAT,@b FLOAT,@s Float
+select @R = 6378.137
+select @a = ABS((@lat1*PI()/180.0)-(@lat2*PI()/180.0))
+select @b = ABS((@lng1*PI()/180.0)-(@lng2*PI()/180.0))
+select @s=2*ASIN(SQRT(POWER(SIN(@a/2),2)+(COS(@lat1*PI()/180.0)*COS(@lat2*PI()/180.0)*POWER(SIN(@b/2),2))))*@R
+return @s;
+end 
+
+
+	 
+	 
+	 
