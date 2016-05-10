@@ -1,0 +1,15 @@
+
+one:
+
+this is a jsp file, which include  the interface of generating  heatmap png
+
+list.jsp
+
+     <a
+			href="<%=request.getContextPath()%>/user/project/report/lightningIntensity.htm?id=${subproject.id}">生成雷电流强度图</a><br></br>
+			
+			Class  :subproject  include the  Latitude and Longitude 
+			
+			
+		  range :10 kilometer
+		  
