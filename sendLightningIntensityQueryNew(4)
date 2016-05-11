@@ -25,7 +25,8 @@
 	         	return null;
 	     }  
 	     
-	 # 函数  （数据库中定义）
+	     
+	      # 函数  （数据库中定义  ，在SQLServer2008R2中定义）
 	 
 	 USE [ldzh]
 GO
