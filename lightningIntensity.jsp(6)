@@ -1,0 +1,118 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+  	  	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=7, IE=9, IE=10">
+        <!--The viewport meta tag is used to improve the presentation and behavior of the samples on iOS devices-->
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+        <script type="text/javascript"
+  	        src="<%=request.getContextPath()%>/scripts/jquery.js">
+  	   </script>
+       <link rel="stylesheet" href="<%=request.getContextPath()%>/css-heatmap/heatmap-lightningIntensity.css" type="text/css">
+       <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/myself/heatmap.js" ></script>    
+       <title>Legend Example (DOM Legends) | heatmap.js</title>
+  </head>
+  <body>
+      <div id="heatmapContainerWrapper">
+          <div id="heatmapContainer">
+          </div>
+          <div id="heatmapLegend">
+            <h2>Descriptive Legend Title</h2>
+            <span id="min"></span>
+            <span id="max"></span>
+            <img id="gradient" src="" style="width:100%" />
+          </div>
+      </div>
+       <script>
+        window.onload = function() {
+              // helper function
+              function $(id) {
+                return document.getElementById(id);
+              };
+    
+              /*  legend code */
+              // we want to display the gradient, so we have to draw it
+              var legendCanvas = document.createElement('canvas');
+              legendCanvas.width = 100;
+              legendCanvas.height = 10;
+              var legendCtx = legendCanvas.getContext('2d');
+              var gradientCfg = {};
+
+              function updateLegend(data) {
+                    // the onExtremaChange callback gives us min, max, and the gradientConfig
+                    // so we can update the legend
+                    $('min').innerHTML = data.min;
+                    $('max').innerHTML = data.max;
+                    // regenerate gradient image
+                    if (data.gradient != gradientCfg) {
+                      gradientCfg = data.gradient;
+                      var gradient = legendCtx.createLinearGradient(0, 0, 100, 1);
+                      for (var key in gradientCfg) {
+                        gradient.addColorStop(key, gradientCfg[key]);
+                      }
+                      legendCtx.fillStyle = gradient;
+                      legendCtx.fillRect(0, 0, 100, 10);
+                      $('gradient').src = legendCanvas.toDataURL();
+                }
+            };
+              /* legend code end */   
+              // create a heatmap instance
+         var heatmap = h337.create({
+                container: document.getElementById('heatmapContainer'),
+                maxOpacity: 0.5,
+                minOpacity: 0,
+                radius: 15,
+                blur: .75,
+              //  backgroundColor: 'rgba(0, 0, 58, 0.96)',  //设置底色  ，可以不要
+                xField:'x',
+                yField:'y',
+                gradient: {
+              	    // enter n keys between 0 and 1 here
+              	    // for gradient color customization
+                    //控制每一级的颜色
+              	    '.1':'#1E90FF',
+              	    '.2':'#1E90FF',
+              	    '.3':'#0000CD',
+              	    '.4':'#0000CD',
+              	    '.5':'#00CD00',
+              	    '.6':'#00CD00',
+              	    '.7': '#FFFF00',
+              	    '.8': '#FFFF00',
+              	    '.85': '#FFFF00',
+              	    '.9': '#EE4000',
+              	    '.95': '#EE0000'
+              	  },
+              // update the legend whenever there's an extrema change
+              onExtremaChange: function onExtremaChange(data) {
+                updateLegend(data);
+              }
+        });
+        /*将编码后的图片数据传到后台 */
+        //如果只是在前台展示，可以不要这一部分
+        var run=function(){	  
+           jQuery.post("<%=request.getContextPath()%>/user/project/report/lightningIntensity.htm",{name:sendString+","+heatmap.getDataURL()},function(){
+        	  // location.href="<%=request.getContextPath()%>/user/project/report/lightningIntensity2.htm";
+            });     
+        };
+        
+        var generate = function() {
+          //接收数据
+          var dataPoints =${lightningIntensity};
+            heatmap.setData({
+              min: 0,
+              max: 230,
+              data: dataPoints
+            });
+         /* 返回热力图图片 heatmap.getDataURL(); */
+         //  ss= heatmap.getDataURL();
+         };
+            generate();
+        var  sendString=${subprojectId};
+             run();
+          //  location.href="<%=request.getContextPath()%>/user/project/report/lightningIntensity2.htm";
+      };
+    </script>
+  </body>
+</html>
